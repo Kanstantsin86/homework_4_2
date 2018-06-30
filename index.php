@@ -1,13 +1,19 @@
 <?php
 require ("config.php");
-$id = $_GET['id'];
+$id = (int)$_GET['id'];
 $action = $_GET['action'];
 
 if($action == "done") {
-    $db->exec("UPDATE tasks SET is_done='Выполнено' WHERE id = $id");
+    //$db->exec("UPDATE tasks SET is_done='Выполнено' WHERE id = $id");    
+    $sth = $db->prepare("UPDATE tasks SET is_done='Выполнено' WHERE id = ?");
+    $sth->execute(array($id));
+    //$done = $sth->fetchAll();
 }
 if($action == "delete") {
-    $db->exec("DELETE FROM tasks WHERE id = $id");
+    //$db->exec("DELETE FROM tasks WHERE id = $id");
+    $sth = $db->prepare("DELETE FROM tasks WHERE id = ?");
+    $sth->execute(array($id));
+    //$del = $sth->fetchAll();
 }
 
 $st = $db->query('SELECT * FROM tasks');
@@ -69,15 +75,18 @@ $st = $db->query('SELECT * FROM tasks');
         <td><h4>Действия</h4></td>
     </tr>
     </thead>
-
-
     <tbody>
     <?php
-    if(!empty($_POST['description'])) {
+    if(isset($_POST['description'])) {
         $thSave = $_POST['description'];
-        $thDate = date ('Y-m-d H:i:s');
         $thDone = "В процессе";
-        $rows = $db->exec("INSERT INTO tasks(id, description, is_done, date_added) VALUES (null, '".@$thSave."','".@$thDone."','".@$thDate."')");
+        date_default_timezone_set('Europe/Minsk');
+        $thDate = date ('Y-m-d H:i:s');
+        //$rows = $db->exec("INSERT INTO tasks(id, description, is_done, date_added) VALUES (null, '".@$thSave."','".@$thDone."','".@$thDate."')");
+        $rows = $db->prepare("INSERT INTO tasks(id, description, is_done, date_added) VALUES (?, ?, ?, ?)");
+        $rows->execute(array(null, $thSave, $thDone, $thDate));
+        //$add = $sth->fetchAll();
+        
         $st = $db->query('SELECT * FROM tasks');
     }
 
@@ -90,8 +99,6 @@ $st = $db->query('SELECT * FROM tasks');
                 <td><a href="?id=<?= $rows ['id'];?>&action=done">Выполнить</a>
                     <a href="?id=<?= $rows ['id'];?>&action=delete">Удалить</a></td>
             </tr>
-
-
     <?php }?>
     </tbody>
 </table>
